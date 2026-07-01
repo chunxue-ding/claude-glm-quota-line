@@ -1,0 +1,25 @@
+{
+  "name": "claude-glm-quota-line",
+  "owner": {
+    "name": "Ding Nan"
+  },
+  "description": "GLM Coding Plan quota tools for Claude Code.",
+  "plugins": [
+    {
+      "name": "claude-glm-quota-line",
+      "source": "./",
+      "description": "Display GLM Coding Plan quota as a colored Claude Code status line.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Ding Nan"
+      },
+      "category": "productivity",
+      "tags": [
+        "glm",
+        "coding-plan",
+        "statusline",
+        "quota"
+      ]
+    }
+  ]
+}

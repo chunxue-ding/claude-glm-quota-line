@@ -1,0 +1,10 @@
+{
+  "name": "claude-glm-quota-line",
+  "version": "0.1.0",
+  "description": "A colorful Claude Code statusline for monitoring GLM Coding Plan 5-hour and weekly quota usage in real time.",
+  "author": {
+    "name": "Ding Nan"
+  },
+  "repository": "https://github.com/chunxue-ding/claude-glm-quota-line",
+  "license": "MIT"
+}
