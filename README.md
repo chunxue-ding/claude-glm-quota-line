@@ -19,6 +19,7 @@ GLM 5h [████████░░] 80% left · reset 07-01 00:25  week [█
 - Reuses existing `ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_BASE_URL`.
 - Never writes or logs the API token.
 - Uses the last valid cached response when a refresh fails.
+- Caches quota data with owner-only (600) permissions.
 - Safely merges Claude Code settings and creates timestamped backups.
 - Supports macOS and Linux.
 
@@ -105,6 +106,7 @@ Claude Code settings and backups are preserved.
 bash -n scripts/*.sh tests/*.sh
 bash tests/test-statusline.sh
 bash tests/test-install.sh
+bash tests/test-cache.sh
 jq empty .claude-plugin/plugin.json .claude-plugin/marketplace.json
 ```
 

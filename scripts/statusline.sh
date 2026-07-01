@@ -32,6 +32,7 @@ else
     -o "$TMP" 2>/dev/null; then
     if jq -e '.data.limits | type == "array"' "$TMP" >/dev/null 2>&1; then
       mv "$TMP" "$CACHE"
+      chmod 600 "$CACHE"
     else
       rm -f "$TMP"
     fi
@@ -50,8 +51,8 @@ else
   fi
 fi
 
-FIVE_H="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 3) | .percentage' "$SOURCE" | head -1)"
-WEEK="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 6) | .percentage' "$SOURCE" | head -1)"
+FIVE_H="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 3) | .percentage // empty' "$SOURCE" | head -1)"
+WEEK="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 6) | .percentage // empty' "$SOURCE" | head -1)"
 FIVE_RESET="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 3) | .nextResetTime // empty' "$SOURCE" | head -1)"
 WEEK_RESET="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 6) | .nextResetTime // empty' "$SOURCE" | head -1)"
 

@@ -41,4 +41,7 @@ assert_contains "$no_week" 'week [░░░░░░░░░░] N/A'
 fresh="$(run_fixture fresh)"
 assert_contains "$fresh" '5h [██████████] 100% left · reset after use'
 
+null_perc="$(run_fixture null-percentage)"
+assert_contains "$null_perc" '5h [░░░░░░░░░░] N/A'
+
 printf 'statusline tests passed\n'
