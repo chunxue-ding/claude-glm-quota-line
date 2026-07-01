@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STATUSLINE="$ROOT/scripts/statusline.sh"
+export TZ=Asia/Shanghai
 
 assert_contains() {
   local output="$1"
@@ -20,6 +21,8 @@ run_fixture() {
 green="$(run_fixture green)"
 assert_contains "$green" '5h [████████░░] 80% left'
 assert_contains "$green" 'week [█████████░] 90% left'
+assert_contains "$green" 'reset 07-01 00:25'
+assert_contains "$green" 'reset 07-06 00:25'
 assert_contains "$green" $'\033[32m'
 
 orange="$(run_fixture orange)"
@@ -32,6 +35,10 @@ assert_contains "$red" $'\033[31m'
 
 no_week="$(run_fixture no-week)"
 assert_contains "$no_week" '5h [██████░░░░] 65% left'
+assert_contains "$no_week" 'reset 07-01 00:25'
 assert_contains "$no_week" 'week [░░░░░░░░░░] N/A'
+
+fresh="$(run_fixture fresh)"
+assert_contains "$fresh" '5h [██████████] 100% left · reset after use'
 
 printf 'statusline tests passed\n'

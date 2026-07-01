@@ -52,6 +52,8 @@ fi
 
 FIVE_H="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 3) | .percentage' "$SOURCE" | head -1)"
 WEEK="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 6) | .percentage' "$SOURCE" | head -1)"
+FIVE_RESET="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 3) | .nextResetTime // empty' "$SOURCE" | head -1)"
+WEEK_RESET="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 6) | .nextResetTime // empty' "$SOURCE" | head -1)"
 
 [ -z "$FIVE_H" ] && FIVE_H='N/A'
 [ -z "$WEEK" ] && WEEK='N/A'
@@ -59,6 +61,7 @@ WEEK="$(jq -r '.data.limits[]? | select(.type == "TOKENS_LIMIT" and .unit == 6) 
 render_quota() {
   local label="$1"
   local used="$2"
+  local reset_ms="$3"
   local width=10
   local reset='\033[0m'
 
@@ -89,10 +92,18 @@ render_quota() {
   for ((i = 0; i < filled; i++)); do bar+='█'; done
   for ((i = 0; i < empty; i++)); do bar+='░'; done
 
-  printf '%b%s [%s] %d%% left%b' "$color" "$label" "$bar" "$remaining" "$reset"
+  local reset_display='N/A'
+  if [ -n "$reset_ms" ] && [ "$reset_ms" != 'null' ]; then
+    local reset_seconds=$((reset_ms / 1000))
+    reset_display="$(date -r "$reset_seconds" '+%m-%d %H:%M' 2>/dev/null || date -d "@$reset_seconds" '+%m-%d %H:%M' 2>/dev/null || printf 'N/A')"
+  elif [ "$used" -eq 0 ]; then
+    reset_display='after use'
+  fi
+
+  printf '%b%s [%s] %d%% left · reset %s%b' "$color" "$label" "$bar" "$remaining" "$reset_display" "$reset"
 }
 
 printf '\033[1mGLM\033[0m '
-render_quota '5h' "$FIVE_H"
+render_quota '5h' "$FIVE_H" "$FIVE_RESET"
 printf '  '
-render_quota 'week' "$WEEK"
+render_quota 'week' "$WEEK" "$WEEK_RESET"

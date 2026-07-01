@@ -4,12 +4,13 @@ A colorful Claude Code status line for monitoring GLM Coding Plan quota in real
 time.
 
 ```text
-GLM 5h [████████░░] 80% left  week [██████░░░░] 60% left
+GLM 5h [████████░░] 80% left · reset 07-01 00:25  week [██████░░░░] 60% left · reset 07-06 00:25
 ```
 
 ## Features
 
 - Displays five-hour and weekly remaining quota.
+- Displays each quota window's local reset date and time when the API provides it.
 - Ten-cell progress bars with ANSI colors:
   - green: 70% or more remaining;
   - orange: 30–69% remaining;
@@ -83,6 +84,10 @@ printf '{}' | ~/.claude/glm-usage-status.sh
 The domestic endpoint may return only the five-hour quota entry. When no
 `TOKENS_LIMIT` entry with `unit=6` is present, the status line shows
 `week: N/A`; it does not estimate or invent a weekly percentage.
+
+For a new rolling window with no usage, the API can return a null reset time.
+The status line shows `reset after use` until the first request starts the
+window, then displays the concrete local reset time.
 
 ## Uninstall
 
