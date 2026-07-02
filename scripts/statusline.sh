@@ -25,10 +25,10 @@ color_ansi() {
 
 config_valid() {
   jq -e '
-    (.barWidth | type == "number" and . >= 1 and . <= 20) and
+    (.barWidth | type == "number" and . == floor and . >= 1 and . <= 20) and
     (.levels | type == "array" and length > 0) and
     all(.levels[]; (.min | type == "number" and . >= 0 and . <= 100) and (.color | type == "string")) and
-    ([.levels[].min] as $m | $m == ($m | sort | reverse)) and
+    ([.levels[].min] as $m | all(range(0; ($m | length) - 1); $m[.] > $m[.+1])) and
     (.levels[-1].min == 0)
   ' "$1" >/dev/null 2>&1
 }

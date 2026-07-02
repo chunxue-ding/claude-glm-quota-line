@@ -1,0 +1,8 @@
+{
+  "barWidth": 10,
+  "levels": [
+    {"min": 70, "color": "green"},
+    {"min": 70, "color": "orange"},
+    {"min": 0, "color": "red"}
+  ]
+}

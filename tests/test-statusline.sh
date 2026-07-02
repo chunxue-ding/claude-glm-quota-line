@@ -71,4 +71,14 @@ invalid="$(run_with_config green config-invalid)"
 assert_contains "$invalid" '5h [████████░░] 80% left'
 assert_contains "$invalid" $'\033[32m'
 
+# Float barWidth must be rejected and fall back to default.
+float_barwidth="$(run_with_config green config-float-barwidth)"
+assert_contains "$float_barwidth" '5h [████████░░] 80% left'
+assert_contains "$float_barwidth" $'\033[32m'
+
+# Duplicate level thresholds must be rejected and fall back to default.
+equal_min="$(run_with_config green config-equal-min)"
+assert_contains "$equal_min" '5h [████████░░] 80% left'
+assert_contains "$equal_min" $'\033[32m'
+
 printf 'statusline tests passed\n'
