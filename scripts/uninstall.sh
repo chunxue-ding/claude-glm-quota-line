@@ -8,18 +8,22 @@ fi
 
 CLAUDE_DIR="$HOME/.claude"
 SETTINGS="$CLAUDE_DIR/settings.json"
-STATUSLINE="$CLAUDE_DIR/glm-usage-status.sh"
-
-rm -f "$STATUSLINE"
+CONFIG_FILE="$CLAUDE_DIR/glm-quota.json"
 
 if [ -f "$SETTINGS" ]; then
   jq empty "$SETTINGS"
   COMMAND="$(jq -r '.statusLine.command // empty' "$SETTINGS")"
-  if [ "$COMMAND" = '~/.claude/glm-usage-status.sh' ]; then
-    TMP="$SETTINGS.tmp.$$"
-    jq 'del(.statusLine)' "$SETTINGS" > "$TMP"
-    mv "$TMP" "$SETTINGS"
-  fi
+  case "$COMMAND" in
+    *'${CLAUDE_PLUGIN_ROOT}/scripts/statusline.sh'* | *'~/.claude/glm-usage-status.sh'*)
+      TMP="$SETTINGS.tmp.$$"
+      jq 'del(.statusLine)' "$SETTINGS" > "$TMP"
+      mv "$TMP" "$SETTINGS"
+      ;;
+  esac
 fi
 
-printf 'Removed GLM quota status line. Existing settings backups were preserved.\n'
+if [ -f "$CONFIG_FILE" ]; then
+  printf 'Preserved user config at %s (remove manually if desired).\n' "$CONFIG_FILE"
+fi
+
+printf 'Removed GLM quota status line setting. Existing settings backups were preserved.\n'

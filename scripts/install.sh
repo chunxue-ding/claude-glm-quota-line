@@ -8,10 +8,9 @@ for command_name in bash curl jq; do
   fi
 done
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 SETTINGS="$CLAUDE_DIR/settings.json"
-STATUSLINE="$CLAUDE_DIR/glm-usage-status.sh"
+LEGACY_SCRIPT="$CLAUDE_DIR/glm-usage-status.sh"
 
 mkdir -p "$CLAUDE_DIR"
 
@@ -24,16 +23,19 @@ else
   printf '%s\n' '{}' > "$SETTINGS"
 fi
 
-cp "$ROOT/scripts/statusline.sh" "$STATUSLINE"
-chmod +x "$STATUSLINE"
+# Migrate away any legacy copy-based install.
+if [ -f "$LEGACY_SCRIPT" ]; then
+  rm -f "$LEGACY_SCRIPT"
+  printf 'Removed legacy script copy %s\n' "$LEGACY_SCRIPT"
+fi
 
 TMP="$SETTINGS.tmp.$$"
 jq '.statusLine = {
   "type": "command",
-  "command": "~/.claude/glm-usage-status.sh",
+  "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/statusline.sh\"",
   "refreshInterval": 60,
   "padding": 1
 }' "$SETTINGS" > "$TMP"
 mv "$TMP" "$SETTINGS"
 
-printf 'Installed GLM quota status line. Restart Claude Code to display it.\n'
+printf 'Configured GLM quota status line to use the plugin script. Restart Claude Code to display it.\n'

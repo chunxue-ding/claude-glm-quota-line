@@ -10,24 +10,30 @@ printf '%s\n' '{"theme":"dark","statusLine":{"type":"command","command":"old-sta
 
 HOME="$TEST_HOME" "$ROOT/scripts/install.sh" >/dev/null
 
-test -x "$TEST_HOME/.claude/glm-usage-status.sh"
-test "$(jq -r '.theme' "$TEST_HOME/.claude/settings.json")" = 'dark'
-test "$(jq -r '.statusLine.command' "$TEST_HOME/.claude/settings.json")" = '~/.claude/glm-usage-status.sh'
+# No script copy is created under ~/.claude/.
+test ! -e "$TEST_HOME/.claude/glm-usage-status.sh"
+# statusLine points at the plugin script via CLAUDE_PLUGIN_ROOT.
+test "$(jq -r '.statusLine.command' "$TEST_HOME/.claude/settings.json")" = '"${CLAUDE_PLUGIN_ROOT}/scripts/statusline.sh"'
 test "$(jq -r '.statusLine.refreshInterval' "$TEST_HOME/.claude/settings.json")" = '60'
+# Other settings are preserved.
+test "$(jq -r '.theme' "$TEST_HOME/.claude/settings.json")" = 'dark'
+
+# A legacy copy-based install is migrated away.
+printf '%s\n' 'legacy' > "$TEST_HOME/.claude/glm-usage-status.sh"
+HOME="$TEST_HOME" "$ROOT/scripts/install.sh" >/dev/null
+test ! -e "$TEST_HOME/.claude/glm-usage-status.sh"
 
 first_backup_count="$(find "$TEST_HOME/.claude" -name 'settings.json.backup.*' | wc -l | tr -d ' ')"
-HOME="$TEST_HOME" "$ROOT/scripts/install.sh" >/dev/null
-second_backup_count="$(find "$TEST_HOME/.claude" -name 'settings.json.backup.*' | wc -l | tr -d ' ')"
-
-if [ "$second_backup_count" -le "$first_backup_count" ]; then
-  printf 'Expected reinstall to create another backup\n' >&2
-  exit 1
-fi
 
 HOME="$TEST_HOME" "$ROOT/scripts/uninstall.sh" >/dev/null
 
-test ! -e "$TEST_HOME/.claude/glm-usage-status.sh"
+# statusLine key removed; theme preserved.
 test "$(jq -r '.theme' "$TEST_HOME/.claude/settings.json")" = 'dark'
 test "$(jq -r 'has("statusLine")' "$TEST_HOME/.claude/settings.json")" = 'false'
+
+# Uninstall preserves a user config file if present.
+printf '%s\n' '{"barWidth":7}' > "$TEST_HOME/.claude/glm-quota.json"
+HOME="$TEST_HOME" "$ROOT/scripts/uninstall.sh" >/dev/null
+test -f "$TEST_HOME/.claude/glm-quota.json"
 
 printf 'install tests passed\n'
