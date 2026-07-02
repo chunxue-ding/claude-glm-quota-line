@@ -14,8 +14,18 @@ assert_contains() {
   fi
 }
 
+# Default config (force a non-existent config path so tests are isolated from
+# the developer's real ~/.claude/glm-quota.json).
 run_fixture() {
-  GLM_QUOTA_FIXTURE="$ROOT/tests/fixtures/$1.json" "$STATUSLINE" <<< '{}'
+  GLM_QUOTA_FIXTURE="$ROOT/tests/fixtures/$1.json" \
+  GLM_QUOTA_CONFIG="$ROOT/tests/fixtures/__no_such_config__.json" \
+  "$STATUSLINE" <<< '{}'
+}
+
+run_with_config() {
+  GLM_QUOTA_FIXTURE="$ROOT/tests/fixtures/$1.json" \
+  GLM_QUOTA_CONFIG="$ROOT/tests/fixtures/$2.json" \
+  "$STATUSLINE" <<< '{}'
 }
 
 green="$(run_fixture green)"
@@ -43,5 +53,22 @@ assert_contains "$fresh" '5h [██████████] 100% left · reset
 
 null_perc="$(run_fixture null-percentage)"
 assert_contains "$null_perc" '5h [░░░░░░░░░░] N/A'
+
+# Custom barWidth (5) and colors (cyan/magenta/red).
+custom="$(run_with_config green config-custom-width-color)"
+assert_contains "$custom" '5h [████░] 80% left'
+assert_contains "$custom" $'\033[36m'
+
+# Four levels route different remainings to different levels/colors.
+four="$(run_with_config quota-mixed config-four-levels)"
+assert_contains "$four" '5h [█████░░░░░] 55% left'
+assert_contains "$four" $'\033[33m'
+assert_contains "$four" 'week [████████░░] 85% left'
+assert_contains "$four" $'\033[32m'
+
+# Invalid config (non-descending min) falls back to the built-in default.
+invalid="$(run_with_config green config-invalid)"
+assert_contains "$invalid" '5h [████████░░] 80% left'
+assert_contains "$invalid" $'\033[32m'
 
 printf 'statusline tests passed\n'

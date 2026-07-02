@@ -3,6 +3,44 @@ set -u
 
 cat >/dev/null
 
+# --- Configuration ---
+CONFIG_FILE="${GLM_QUOTA_CONFIG:-$HOME/.claude/glm-quota.json}"
+DEFAULT_LEVELS='[{"min":70,"color":"green"},{"min":30,"color":"orange"},{"min":0,"color":"red"}]'
+DEFAULT_BAR_WIDTH=10
+
+color_ansi() {
+  case "$1" in
+    green)   printf '\033[32m' ;;
+    orange)  printf '\033[38;5;214m' ;;
+    red)     printf '\033[31m' ;;
+    yellow)  printf '\033[33m' ;;
+    blue)    printf '\033[34m' ;;
+    cyan)    printf '\033[36m' ;;
+    magenta) printf '\033[35m' ;;
+    gray)    printf '\033[90m' ;;
+    white)   printf '\033[37m' ;;
+    *)       printf '\033[90m' ;;
+  esac
+}
+
+config_valid() {
+  jq -e '
+    (.barWidth | type == "number" and . >= 1 and . <= 20) and
+    (.levels | type == "array" and length > 0) and
+    all(.levels[]; (.min | type == "number" and . >= 0 and . <= 100) and (.color | type == "string")) and
+    ([.levels[].min] as $m | $m == ($m | sort | reverse)) and
+    (.levels[-1].min == 0)
+  ' "$1" >/dev/null 2>&1
+}
+
+if [ -s "$CONFIG_FILE" ] && config_valid "$CONFIG_FILE"; then
+  BAR_WIDTH="$(jq -r '.barWidth' "$CONFIG_FILE")"
+  LEVELS_JSON="$(jq -c '.levels' "$CONFIG_FILE")"
+else
+  BAR_WIDTH="$DEFAULT_BAR_WIDTH"
+  LEVELS_JSON="$DEFAULT_LEVELS"
+fi
+
 CACHE="${TMPDIR:-/tmp}/glm-coding-plan-quota-${USER:-user}.json"
 SOURCE=''
 
@@ -63,11 +101,12 @@ render_quota() {
   local label="$1"
   local used="$2"
   local reset_ms="$3"
-  local width=10
   local reset='\033[0m'
 
   if [ "$used" = 'N/A' ]; then
-    printf '%b%s [░░░░░░░░░░] N/A%b' '\033[90m' "$label" "$reset"
+    local na_bar='' i
+    for ((i = 0; i < BAR_WIDTH; i++)); do na_bar+='░'; done
+    printf '%b%s [%s] N/A%b' '\033[90m' "$label" "$na_bar" "$reset"
     return
   fi
 
@@ -76,19 +115,17 @@ render_quota() {
   [ "$remaining" -lt 0 ] && remaining=0
   [ "$remaining" -gt 100 ] && remaining=100
 
+  local color_name
+  color_name="$(printf '%s' "$LEVELS_JSON" | jq -r --argjson r "$remaining" '.[] | select(.min <= $r) | .color' | head -1)"
+  [ -z "$color_name" ] && color_name='gray'
+  local color
+  color="$(color_ansi "$color_name")"
+
+  local width="$BAR_WIDTH"
   local filled=$((remaining * width / 100))
   local empty=$((width - filled))
   local bar=''
-  local color
   local i
-
-  if [ "$remaining" -ge 70 ]; then
-    color='\033[32m'
-  elif [ "$remaining" -ge 30 ]; then
-    color='\033[38;5;214m'
-  else
-    color='\033[31m'
-  fi
 
   for ((i = 0; i < filled; i++)); do bar+='█'; done
   for ((i = 0; i < empty; i++)); do bar+='░'; done
