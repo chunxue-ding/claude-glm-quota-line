@@ -1,6 +1,6 @@
 ---
 description: Customize GLM quota status-line thresholds, colors, and bar width
-allowed-tools: Bash, Read, Write
+allowed-tools: Bash, Read, Write, AskUserQuestion
 ---
 
 Help the user customize the GLM quota status line. The config file is

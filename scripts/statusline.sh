@@ -27,14 +27,15 @@ config_valid() {
   jq -e '
     (.barWidth | type == "number" and . == floor and . >= 1 and . <= 20) and
     (.levels | type == "array" and length > 0) and
-    all(.levels[]; (.min | type == "number" and . >= 0 and . <= 100) and (.color | type == "string")) and
+    all(.levels[]; (.min | type == "number" and . == floor and . >= 0 and . <= 100) and (.color | type == "string")) and
+    # Strictly descending: consecutive equal `min` values are invalid.
     ([.levels[].min] as $m | all(range(0; ($m | length) - 1); $m[.] > $m[.+1])) and
     (.levels[-1].min == 0)
   ' "$1" >/dev/null 2>&1
 }
 
 if [ -s "$CONFIG_FILE" ] && config_valid "$CONFIG_FILE"; then
-  BAR_WIDTH="$(jq -r '.barWidth' "$CONFIG_FILE")"
+  BAR_WIDTH="$(jq -r '.barWidth | floor' "$CONFIG_FILE")"
   LEVELS_JSON="$(jq -c '.levels' "$CONFIG_FILE")"
 else
   BAR_WIDTH="$DEFAULT_BAR_WIDTH"

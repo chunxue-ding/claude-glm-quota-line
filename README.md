@@ -63,7 +63,7 @@ The installer:
 {
   "statusLine": {
     "type": "command",
-    "command": "${CLAUDE_PLUGIN_ROOT}/scripts/statusline.sh",
+    "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/statusline.sh\"",
     "refreshInterval": 60,
     "padding": 1
   }

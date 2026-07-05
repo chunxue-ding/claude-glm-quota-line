@@ -23,8 +23,6 @@ printf '%s\n' 'legacy' > "$TEST_HOME/.claude/glm-usage-status.sh"
 HOME="$TEST_HOME" "$ROOT/scripts/install.sh" >/dev/null
 test ! -e "$TEST_HOME/.claude/glm-usage-status.sh"
 
-first_backup_count="$(find "$TEST_HOME/.claude" -name 'settings.json.backup.*' | wc -l | tr -d ' ')"
-
 HOME="$TEST_HOME" "$ROOT/scripts/uninstall.sh" >/dev/null
 
 # statusLine key removed; theme preserved.

@@ -35,6 +35,12 @@ assert_contains "$green" 'reset 07-01 00:25'
 assert_contains "$green" 'reset 07-06 00:25'
 assert_contains "$green" $'\033[32m'
 
+# Green/orange boundary: 5h remaining == 70 (the inclusive >= green threshold).
+# 70% remaining -> 7 filled of 10, and must render GREEN (locks inclusive >=).
+boundary="$(run_fixture quota-70-boundary)"
+assert_contains "$boundary" '5h [███████░░░] 70% left'
+assert_contains "$boundary" $'\033[32m'
+
 orange="$(run_fixture orange)"
 assert_contains "$orange" '5h [█████░░░░░] 50% left'
 assert_contains "$orange" $'\033[38;5;214m'
@@ -75,6 +81,14 @@ assert_contains "$invalid" $'\033[32m'
 float_barwidth="$(run_with_config green config-float-barwidth)"
 assert_contains "$float_barwidth" '5h [████████░░] 80% left'
 assert_contains "$float_barwidth" $'\033[32m'
+
+# Integer-valued float barWidth (10.0) passes validation; reading it with
+# `| floor` yields an int so bash arithmetic never sees the raw "10.0" string.
+# Renders the DEFAULT-width 10-cell bar with no error on stderr.
+intfloat_out="$(run_with_config green config-intfloat-barwidth 2>/tmp/intfloat-err)"
+assert_contains "$intfloat_out" '5h [████████░░] 80% left'
+assert_contains "$intfloat_out" $'\033[32m'
+test ! -s /tmp/intfloat-err
 
 # Duplicate level thresholds must be rejected and fall back to default.
 equal_min="$(run_with_config green config-equal-min)"
