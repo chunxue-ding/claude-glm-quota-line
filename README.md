@@ -22,13 +22,15 @@ GLM 5h [████████░░] 80% left · reset 07-01 00:25  week [█
 - Caches quota data with owner-only (600) permissions.
 - Safely merges Claude Code settings and creates timestamped backups.
 - Configurable bar width, thresholds, and colors via `~/.claude/glm-quota.json`.
-- Supports macOS and Linux.
+- Runs on Windows, macOS, and Linux with no external dependencies — the scripts
+  are plain Node.js, and Node ships with Claude Code.
 
 ## Requirements
 
 - Claude Code with GLM Coding Plan already configured.
-- Bash 3.2 or newer.
-- `curl` and `jq`.
+- Node.js — provided by Claude Code itself, so there is nothing extra to install.
+- On Windows: Git Bash (bundled with Git for Windows), which Claude Code uses to
+  run `statusLine.command`.
 
 ## Install as a Claude Code plugin
 
@@ -47,7 +49,7 @@ Restart Claude Code after setup.
 ```bash
 tmp="$(mktemp -d)" \
   && git clone https://github.com/chunxue-ding/claude-glm-quota-line.git "$tmp/claude-glm-quota-line" \
-  && "$tmp/claude-glm-quota-line/scripts/install.sh"
+  && node "$tmp/claude-glm-quota-line/scripts/install.js"
 ```
 
 The installer:
@@ -56,14 +58,14 @@ The installer:
 2. removes any legacy copy of the status-line script from earlier installs
    (see [Migration](#migration));
 3. merges the following status-line setting without replacing other settings,
-   pointing Claude Code at the plugin's own script via the
+   pointing Claude Code at the plugin's own Node script via the
    `${CLAUDE_PLUGIN_ROOT}` variable Claude Code sets at runtime:
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/statusline.sh\"",
+    "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/statusline.js\"",
     "refreshInterval": 60,
     "padding": 1
   }
@@ -81,7 +83,7 @@ After plugin installation:
 Or run the script directly from the plugin checkout:
 
 ```bash
-printf '{}' | /path/to/claude-glm-quota-line/scripts/statusline.sh
+node /path/to/claude-glm-quota-line/scripts/statusline.js < /dev/null
 ```
 
 ## Customization
@@ -143,14 +145,15 @@ effect.
 
 Earlier versions of this plugin copied `statusline.sh` to
 `~/.claude/glm-usage-status.sh` and pointed `statusLine.command` at that copy.
-The installer now points `statusLine.command` at
-`${CLAUDE_PLUGIN_ROOT}/scripts/statusline.sh` instead, so the script is always
-the version shipped with the installed plugin.
+The current version is written in Node.js and points `statusLine.command` at
+`node "${CLAUDE_PLUGIN_ROOT}/scripts/statusline.js"`, so the script is always
+the version shipped with the installed plugin and needs no external tools such
+as `jq` or `curl`.
 
 Re-running `/claude-glm-quota-line:setup` (or the direct
-`scripts/install.sh`) migrates an existing copy-based install automatically: it
+`scripts/install.js`) migrates an existing copy-based install automatically: it
 removes the legacy `~/.claude/glm-usage-status.sh` and updates
-`statusLine.command` to the plugin-root path. Your quota config file
+`statusLine.command` to the Node form. Your quota config file
 (`~/.claude/glm-quota.json`) is left untouched.
 
 ## Domestic weekly quota behavior
@@ -166,23 +169,29 @@ window, then displays the concrete local reset time.
 ## Uninstall
 
 ```bash
-/path/to/claude-glm-quota-line/scripts/uninstall.sh
+node /path/to/claude-glm-quota-line/scripts/uninstall.js
 ```
 
 Uninstallation removes the `statusLine` setting only when it still points at
-this plugin's script (either the current `${CLAUDE_PLUGIN_ROOT}` path or the
-legacy `~/.claude/glm-usage-status.sh` copy). Your quota config file
-(`~/.claude/glm-quota.json`), other Claude Code settings, and existing backups
-are preserved.
+this plugin's script (the current Node form, the prior bash
+`${CLAUDE_PLUGIN_ROOT}` form, or the legacy `~/.claude/glm-usage-status.sh`
+copy). Your quota config file (`~/.claude/glm-quota.json`), other Claude Code
+settings, and existing backups are preserved.
 
 ## Development
 
+The scripts use only Node.js built-ins (no npm dependencies). Lint the syntax
+and run the test suite with:
+
 ```bash
-bash -n scripts/*.sh tests/*.sh
-bash tests/test-statusline.sh
-bash tests/test-install.sh
-bash tests/test-cache.sh
-jq empty .claude-plugin/plugin.json .claude-plugin/marketplace.json
+node --check scripts/*.js
+node --test
+```
+
+Validate the plugin metadata JSON:
+
+```bash
+node -e "['.claude-plugin/plugin.json','.claude-plugin/marketplace.json'].forEach(f=>JSON.parse(require('fs').readFileSync(f,'utf8')))"
 ```
 
 ## License
